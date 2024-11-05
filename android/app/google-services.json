@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "830000713864",
+    "project_id": "gen-z-gems-97771",
+    "storage_bucket": "gen-z-gems-97771.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:830000713864:android:d826b1ffd2abdb9a490f3d",
+        "android_client_info": {
+          "package_name": "com.genzgems.users"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkKbzT3wWWJUFfTYEAnxDyRMxErZ3zMUY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
