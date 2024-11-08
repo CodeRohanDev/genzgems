@@ -40,10 +40,19 @@ class _ChatInterfaceScreenState extends State<ChatInterfaceScreen> {
         .get();
 
     if (userDoc.exists) {
-      setState(() {
-        userFullName = userDoc['fullName'] ?? 'Unknown User';
-        userProfileImageUrl = userDoc['profileImageUrl'] ?? '';
-      });
+      userFullName = userDoc['fullName'] ?? 'unknown user';
+      // Inside the widget where you display the profile image
+      Widget buildProfileImage() {
+        return userProfileImageUrl.isNotEmpty
+            ? CircleAvatar(
+                radius: 40,
+                backgroundImage: NetworkImage(userProfileImageUrl),
+              )
+            : CircleAvatar(
+                radius: 40,
+                child: Icon(Icons.person, size: 40),
+              );
+      }
     }
   }
 
@@ -258,7 +267,8 @@ class _ChatInterfaceScreenState extends State<ChatInterfaceScreen> {
           children: [
             Material(
               elevation: 3,
-              color: isMe ? Color(0xFFDFF7F9) : Color(0xFFB2ECEE),
+              color:
+                  isMe ? Color(0xFFDFF7F9) : Color.fromARGB(255, 255, 255, 255),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(isMe ? 12 : 2),
                 topRight: Radius.circular(isMe ? 2 : 12),

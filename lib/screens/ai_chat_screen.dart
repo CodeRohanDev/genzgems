@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, avoid_print
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -261,7 +263,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
             ),
           ],
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color.fromARGB(106, 33, 149, 243),
       ),
       body: Stack(
         children: [
@@ -305,8 +307,9 @@ class _AIChatScreenState extends State<AIChatScreen> {
                             maxWidth: MediaQuery.of(context).size.width * 0.75,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                isUser ? Colors.green[100] : Colors.grey[300],
+                            color: isUser
+                                ? const Color.fromARGB(87, 18, 101, 255)
+                                : Colors.grey[300],
                             borderRadius: BorderRadius.circular(10.0),
                           ),
                           child: Column(

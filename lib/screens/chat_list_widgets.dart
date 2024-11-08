@@ -1,3 +1,5 @@
+// ignore_for_file: use_key_in_widget_constructors, use_super_parameters
+
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -19,14 +21,21 @@ class ChatListItem extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress, // Handle long press
       child: Container(
-        color: Colors.transparent,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+                color: const Color.fromARGB(255, 141, 141, 141), width: 0.5),
+          ),
+        ),
         child: ListTile(
           leading: CircleAvatar(
+            backgroundColor: Colors.transparent,
             backgroundImage: (chat['profileImageUrl'] != null &&
                     chat['profileImageUrl'].isNotEmpty)
                 ? NetworkImage(chat['profileImageUrl'])
                 : AssetImage(
-                    'assets/logo.png'), // Path to your default image asset
+                    'assets/person3.png',
+                  ) as ImageProvider,
             radius: 25,
           ),
           title: Text(
@@ -43,8 +52,27 @@ class ChatListItem extends StatelessWidget {
             children: [
               Text(
                 chat['lastMessageTime'] != null
-                    ? "${chat['lastMessageTime'].day}/${chat['lastMessageTime'].month}/${chat['lastMessageTime'].year} "
-                        "${chat['lastMessageTime'].hour}:${chat['lastMessageTime'].minute.toString().padLeft(2, '0')}"
+                    ? (() {
+                        final DateTime now = DateTime.now();
+                        final DateTime lastMessageTime =
+                            chat['lastMessageTime'];
+                        final Duration difference =
+                            now.difference(lastMessageTime);
+
+                        if (difference.inHours < 24 &&
+                            now.day == lastMessageTime.day) {
+                          // Show only time if within the last 24 hours of the same day
+                          return "${lastMessageTime.hour}:${lastMessageTime.minute.toString().padLeft(2, '0')}";
+                        } else if (difference.inDays == 1 ||
+                            (difference.inHours < 48 &&
+                                now.day != lastMessageTime.day)) {
+                          // Show "Yesterday" if the message was sent yesterday
+                          return "Yesterday";
+                        } else {
+                          // Show date for older messages
+                          return "${lastMessageTime.day}/${lastMessageTime.month}/${lastMessageTime.year}";
+                        }
+                      })()
                     : '',
                 style: TextStyle(fontSize: 12),
               ),
@@ -52,7 +80,7 @@ class ChatListItem extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(5),
                   decoration: BoxDecoration(
-                    color: Colors.red,
+                    color: const Color.fromARGB(255, 127, 255, 131),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(

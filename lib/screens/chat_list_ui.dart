@@ -63,7 +63,11 @@ class _ChatListPageState extends State<ChatListPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color.fromARGB(24, 0, 123, 224),
       appBar: AppBar(
+        backgroundColor: Color.fromARGB(24, 0, 123, 224),
+        toolbarHeight:
+            80, // Adjust this value to increase or decrease the AppBar height
         title: _isSearching
             ? TextField(
                 controller: _searchController,
@@ -74,10 +78,10 @@ class _ChatListPageState extends State<ChatListPage>
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15)),
                   filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
+                  fillColor: Colors.white.withOpacity(1),
                   contentPadding:
                       EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-                  prefixIcon: Icon(Icons.search, color: Colors.white),
+                  prefixIcon: Icon(Icons.search, color: Colors.black),
                 ),
                 style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0)),
                 onChanged: (value) {
@@ -86,7 +90,16 @@ class _ChatListPageState extends State<ChatListPage>
                   });
                 },
               )
-            : Text("Chat List"),
+            : Text(
+                "Gen Z Gems",
+                style: TextStyle(
+                  color: Color(0xFF5832AE), // Set the text color to #5832AE
+                  fontSize: 22,
+                  letterSpacing: 1,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
         leading: isChatSelected
             ? IconButton(
                 icon: Icon(Icons.arrow_back),
@@ -106,7 +119,10 @@ class _ChatListPageState extends State<ChatListPage>
             ),
           if (!isChatSelected)
             IconButton(
-              icon: Icon(_isSearching ? Icons.close : Icons.search),
+              icon: Icon(
+                _isSearching ? Icons.close : Icons.search,
+                color: Colors.black,
+              ),
               onPressed: _toggleSearch,
             ),
           IconButton(
@@ -146,9 +162,15 @@ class _ChatListPageState extends State<ChatListPage>
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(
-              child: Text(
-                'No chats available',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Lottie.asset("assets/nochat.json"),
+                  Text(
+                    'No chats available',
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
             );
           }

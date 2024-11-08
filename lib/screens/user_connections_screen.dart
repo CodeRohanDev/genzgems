@@ -214,7 +214,8 @@ class _UserConnectionsScreenState extends State<UserConnectionsScreen> {
                                   user['profileImageUrl'].isNotEmpty
                               ? NetworkImage(user['profileImageUrl'])
                               : AssetImage(
-                                  'assets/logo.png'), // Replace with your asset image path
+                                  'assets/logo.png',
+                                ), // Replace with your asset image path
                         ),
                       ),
                       title: GestureDetector(
@@ -233,12 +234,16 @@ class _UserConnectionsScreenState extends State<UserConnectionsScreen> {
                         onTap: () {
                           _navigateToUserProfile(user['id']);
                         },
-                        child: Text('@${user['username']}'),
+                        child: Text(
+                          '@${user['username']}',
+                        ),
                       ),
                       trailing: IconButton(
                         icon: Icon(UIcons.regularStraight.message_code),
                         onPressed: () {
-                          _navigateToChat(user['id']);
+                          _navigateToChat(
+                            user['id'],
+                          );
                         },
                       ),
                     );
