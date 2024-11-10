@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:genzgems/screens/Profile/User%20Profile/user_profile_screen.dart';
@@ -57,7 +59,7 @@ class _FollowersFollowingScreenState extends State<FollowersFollowingScreen>
           'fullName': data?['fullName'] ?? 'Unknown',
           'profileImageUrl': data != null && data.containsKey('profileImageUrl')
               ? data['profileImageUrl']
-              : 'assets/logo.png',
+              : 'assets/person3.png',
         };
       }).toList();
 
@@ -141,7 +143,7 @@ class _FollowersFollowingScreenState extends State<FollowersFollowingScreen>
       appBar: AppBar(
         bottom: TabBar(
           controller: _tabController,
-          tabs: [
+          tabs: const [
             Tab(text: 'Followers'),
             Tab(text: 'Following'),
           ],
@@ -177,6 +179,21 @@ class _FollowersFollowingScreenState extends State<FollowersFollowingScreen>
           ),
           title: Text(follower['fullName']),
           trailing: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              foregroundColor: isFollowing ? Colors.black : Colors.white,
+              backgroundColor: isFollowing
+                  ? const Color.fromARGB(164, 158, 158, 158)
+                  : const Color.fromARGB(197, 68, 137, 255),
+              padding: EdgeInsets.symmetric(
+                  horizontal: 25,
+                  vertical: 2), // Add padding for better button size
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8), // Rounded corners
+              ),
+              elevation: 5, // Subtle elevation for better interaction feedback
+              shadowColor: Colors.black
+                  .withOpacity(0.2), // Shadow color for subtle shadow effect
+            ),
             onPressed: () {
               if (isFollowing) {
                 _unfollowUser(follower['userId']);
@@ -184,7 +201,13 @@ class _FollowersFollowingScreenState extends State<FollowersFollowingScreen>
                 _followUser(follower['userId']);
               }
             },
-            child: Text(isFollowing ? 'Unfollow' : 'Follow'),
+            child: Text(
+              isFollowing ? 'Unfollow' : 'Follow',
+              style: TextStyle(
+                fontWeight: FontWeight.bold, // Bold text for emphasis
+                fontSize: 16, // Slightly larger font for better readability
+              ),
+            ),
           ),
           onTap: () {
             Navigator.push(
@@ -216,10 +239,29 @@ class _FollowersFollowingScreenState extends State<FollowersFollowingScreen>
           ),
           title: Text(followee['fullName']),
           trailing: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(164, 158, 158, 158),
+              padding: EdgeInsets.symmetric(
+                  horizontal: 25,
+                  vertical: 2), // Add padding for better button size
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8), // Rounded corners
+              ),
+              elevation: 5, // Subtle elevation for better interaction feedback
+              shadowColor: Colors.black
+                  .withOpacity(0.2), // Shadow color for subtle shadow effect
+            ),
             onPressed: () {
               _unfollowUser(followee['userId']);
             },
-            child: Text('Unfollow'),
+            child: Text(
+              'Unfollow',
+              style: TextStyle(
+                fontWeight: FontWeight.bold, // Bold text for emphasis
+                color: Colors.black,
+                fontSize: 16, // Slightly larger font for better readability
+              ),
+            ),
           ),
           onTap: () {
             Navigator.push(

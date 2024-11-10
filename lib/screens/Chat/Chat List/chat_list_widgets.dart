@@ -85,7 +85,7 @@ class ChatListItem extends StatelessWidget {
                   ),
                   child: Text(
                     chat['unreadMessagesCount'].toString(),
-                    style: TextStyle(color: Colors.white, fontSize: 12),
+                    style: TextStyle(color: Colors.black, fontSize: 12),
                   ),
                 ),
             ],

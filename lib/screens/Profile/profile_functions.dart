@@ -26,16 +26,12 @@ Widget buildProfileHeader(
 ) {
   final ImagePicker _picker = ImagePicker();
 
-  // Check if profile or cover images are loading
-  bool isLoading = profileImageUrl == null && coverImageUrl == null;
-
   return Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
     GestureDetector(
       onTap: () => showCoverPhotoDialog(coverImageUrl, context, _picker),
       child: Stack(
         children: [
           Container(
-            margin: EdgeInsets.all(0),
             height: 200,
             width: double.infinity,
             decoration: BoxDecoration(
@@ -69,54 +65,35 @@ Widget buildProfileHeader(
     ),
     SizedBox(height: 10),
 
-    // Shimmer effect for profile image
-    isLoading
-        ? Shimmer.fromColors(
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
-            child: CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.grey[300],
-            ),
-          )
-        : GestureDetector(
-            onTap: () => showProfileDialog(profileImageUrl, context, _picker),
-            child: CircleAvatar(
-              radius: 50,
-              backgroundImage: profileImageUrl != null
-                  ? NetworkImage(profileImageUrl)
-                  : AssetImage('assets/person3.png') as ImageProvider,
-            ),
-          ),
+    // Profile image with default asset if no URL
+    GestureDetector(
+      onTap: () => showProfileDialog(profileImageUrl, context, _picker),
+      child: CircleAvatar(
+        radius: 50,
+        backgroundImage: profileImageUrl?.isEmpty ?? true
+            ? AssetImage('assets/person3.png') as ImageProvider
+            : NetworkImage(profileImageUrl!),
+      ),
+    ),
 
     SizedBox(width: 20),
     Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        isLoading
-            ? Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: Container(
-                  width: 150,
-                  height: 20,
-                  color: Colors.grey,
-                ),
+        fullName.isEmpty
+            ? Text(
+                'Full Name Not Available',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               )
             : Text(
                 fullName,
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
         SizedBox(height: 1),
-        isLoading
-            ? Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: Container(
-                  width: 100,
-                  height: 16,
-                  color: Colors.grey,
-                ),
+        username.isEmpty
+            ? Text(
+                'Username Not Available',
+                style: TextStyle(fontSize: 18, color: Colors.grey[700]),
               )
             : Text(
                 '@$username',
@@ -124,7 +101,8 @@ Widget buildProfileHeader(
               ),
       ],
     ),
-    SizedBox(height: 15),
+    SizedBox(height: 10),
+
     if (category != null && category.isNotEmpty)
       Container(
         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -135,18 +113,14 @@ Widget buildProfileHeader(
         child:
             Text(category, style: TextStyle(fontSize: 16, color: Colors.black)),
       ),
-    SizedBox(height: 5),
+    SizedBox(height: 10),
 
-    // Shimmer effect for bio
-    isLoading
-        ? Shimmer.fromColors(
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
-            child: Container(
-              width: double.infinity,
-              height: 20,
-              color: Colors.grey,
-            ),
+    bio.isEmpty
+        ? Text(
+            'Bio Not Available',
+            style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+            maxLines: null,
+            softWrap: true,
           )
         : Text(
             bio,
@@ -155,10 +129,7 @@ Widget buildProfileHeader(
             softWrap: true,
           ),
     Padding(
-      padding: const EdgeInsets.only(
-        left: 30,
-        right: 30,
-      ),
+      padding: const EdgeInsets.only(left: 30, right: 30),
       child: SizedBox(
         width: double.infinity,
         height: 50,
@@ -181,8 +152,8 @@ Widget buildProfileHeader(
             "Edit Profile",
             style: TextStyle(
               letterSpacing: 1,
-              color: Colors.black, // Text color
-              fontSize: 16, // Font size
+              color: Colors.black,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
