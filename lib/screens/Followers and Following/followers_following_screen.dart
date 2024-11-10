@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:genzgems/screens/user_profile_screen.dart';
+import 'package:genzgems/screens/Profile/User%20Profile/user_profile_screen.dart';
 
 class FollowersFollowingScreen extends StatefulWidget {
   final String userId;

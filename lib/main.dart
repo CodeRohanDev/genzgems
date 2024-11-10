@@ -2,14 +2,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:genzgems/screens/forgot_password_screen.dart';
-import 'package:genzgems/screens/update_profile_screen.dart';
+import 'package:genzgems/screens/Authentication/forgot_password_screen.dart';
+import 'package:genzgems/screens/Profile/profile_screen.dart';
+import 'package:genzgems/screens/Profile/Update%20Profile/update_profile_screen.dart';
 import 'package:provider/provider.dart';
-import 'screens/login_screen.dart';
-import 'screens/signup_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/splash_screen.dart';
-import 'screens/verification_screen.dart';
+import 'screens/Authentication/login_screen.dart';
+import 'screens/Authentication/signup_screen.dart';
+import 'screens/Home/home_screen.dart';
+import 'screens/Authentication/splash_screen.dart';
+import 'screens/Authentication/verification_screen.dart';
 import 'theme_notifier.dart';
 
 void main() async {
@@ -54,6 +55,7 @@ class MyApp extends StatelessWidget {
               '/update_profile': (context) => UpdateProfileScreen(),
               '/forgot_password': (context) => ForgotPasswordScreen(),
               '/register': (context) => SignUpScreen(),
+              '/profile': (context) => ProfileScreen(),
             },
           ),
         );

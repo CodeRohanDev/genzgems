@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:genzgems/screens/chat_interface_screen.dart';
-import 'package:genzgems/screens/post_details_screen.dart';
+import 'package:genzgems/screens/Chat/Chat%20Interface/chat_interface_screen.dart';
+import 'package:genzgems/screens/Posts/post_details_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final String userId; // User ID passed from the search results

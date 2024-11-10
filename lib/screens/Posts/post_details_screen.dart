@@ -2,8 +2,9 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:genzgems/screens/user_profile_screen.dart';
+import 'package:genzgems/screens/Profile/User%20Profile/user_profile_screen.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -131,15 +132,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                                   as Map<String, dynamic>;
                                               String postUserId =
                                                   postData['userId'];
+                                              String imageUrl = postData[
+                                                      'imageUrl'] ??
+                                                  ''; // Ensure imageUrl is available
 
                                               if (userId == postUserId) {
-                                                _showPostOptions(context);
+                                                _showPostOptions(context,
+                                                    widget.postId, imageUrl);
                                               } else {
                                                 ScaffoldMessenger.of(context)
-                                                    .showSnackBar(SnackBar(
-                                                  content: Text(
-                                                      'You can only delete your own posts'),
-                                                ));
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                      content: Text(
+                                                          'You can only delete your own posts')),
+                                                );
                                               }
                                             }
                                           },
@@ -552,31 +558,124 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     _commentController.clear();
   }
 
-  void _showPostOptions(BuildContext context) {
+  void _showPostOptions(BuildContext context, String postId, String imageUrl) {
     showModalBottomSheet(
-        context: context,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (BuildContext context) {
-          return ListView(
-              padding: EdgeInsets.all(16),
-              shrinkWrap: true,
-              children: [
-                ListTile(
-                  title: Text('Delete Post'),
-                  onTap: () {
-                    // Implement delete functionality here
-                    Navigator.pop(context);
-                  },
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return ListView(
+          padding: EdgeInsets.all(16),
+          shrinkWrap: true,
+          children: [
+            ListTile(
+              title: Text('Delete Post', style: TextStyle(color: Colors.red)),
+              onTap: () async {
+                Navigator.pop(context); // Close the bottom sheet
+                bool confirmDelete = await _confirmDelete(context);
+                if (confirmDelete) {
+                  // Pass the correct userId here
+                  String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+                  await _deletePost(postId, imageUrl, userId, context);
+                }
+              },
+            ),
+            ListTile(
+              title: Text('Cancel'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+// Show confirmation dialog for deletion
+  Future<bool> _confirmDelete(BuildContext context) async {
+    return await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Delete Post'),
+              content: Text('Are you sure you want to delete this post?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('Cancel'),
                 ),
-                ListTile(
-                    title: Text('Cancel'),
-                    onTap: () {
-                      Navigator.pop(context);
-                    })
-              ]);
-        });
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text('Delete', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+// Delete the post from Firestore and remove image from Storage
+  Future<void> _deletePost(
+    String postId,
+    String imageUrl,
+    String userId, // UserId to update post count
+    BuildContext context,
+  ) async {
+    try {
+      // Step 1: Fetch the current post count of the user
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (!userDoc.exists) {
+        throw Exception("User not found");
+      }
+
+      // Get the current post count of the user
+      int currentPostCount = userDoc['postsCount'];
+
+      // Step 2: Decrement the post count by 1
+      int newPostCount = currentPostCount - 1;
+
+      // Step 3: Update the user's postsCount field in Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'postsCount': newPostCount,
+      });
+
+      // Step 4: Delete the post document from Firestore
+      await FirebaseFirestore.instance.collection('posts').doc(postId).delete();
+
+      // Step 5: If there's an image associated, delete it from Firebase Storage
+      if (imageUrl.isNotEmpty) {
+        final Reference storageRef =
+            FirebaseStorage.instance.refFromURL(imageUrl);
+        await storageRef.delete();
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Post deleted successfully!')),
+        );
+
+        // Navigate to the Profile Page after deletion
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/profile', // Ensure this route is correct
+          (route) => false, // Remove all previous routes
+        );
+      }
+    } catch (e) {
+      print('Error deleting post: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete post. Please try again.')),
+        );
+      }
+    }
   }
 }
 

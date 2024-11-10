@@ -3,8 +3,8 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:genzgems/screens/chat_interface_functions.dart';
-import 'package:genzgems/screens/message_input_widget.dart';
+import 'package:genzgems/screens/Chat/Chat%20List/chat_interface_functions.dart';
+import 'package:genzgems/screens/Chat/Chat%20Interface/message_input_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lottie/lottie.dart';
 
@@ -41,6 +41,7 @@ class _ChatInterfaceScreenState extends State<ChatInterfaceScreen> {
 
     if (userDoc.exists) {
       userFullName = userDoc['fullName'] ?? 'unknown user';
+      userProfileImageUrl = userDoc['profileImageUrl'] ?? '';
       // Inside the widget where you display the profile image
       Widget buildProfileImage() {
         return userProfileImageUrl.isNotEmpty
@@ -137,7 +138,7 @@ class _ChatInterfaceScreenState extends State<ChatInterfaceScreen> {
             CircleAvatar(
               backgroundImage: userProfileImageUrl.isNotEmpty
                   ? NetworkImage(userProfileImageUrl)
-                  : AssetImage('assets/logo.png'),
+                  : AssetImage('assets/person3.png'),
             ),
             SizedBox(width: 8),
             Text(

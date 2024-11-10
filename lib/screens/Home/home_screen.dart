@@ -4,12 +4,12 @@
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:genzgems/screens/chat_list_ui.dart';
-import 'package:genzgems/screens/face_filters.dart';
-import 'package:genzgems/screens/profile_screen.dart';
-import 'package:genzgems/screens/upload_post_page.dart';
+import 'package:genzgems/screens/Chat/Chat%20List/chat_list_ui.dart';
+import 'package:genzgems/screens/Face%20Filters/face_filters.dart';
+import 'package:genzgems/screens/Profile/profile_screen.dart';
+import 'package:genzgems/screens/Posts/upload_post_page.dart';
 import 'package:provider/provider.dart';
-import '../theme_notifier.dart';
+import '../../theme_notifier.dart';
 
 class HomeScreen extends StatefulWidget {
   @override

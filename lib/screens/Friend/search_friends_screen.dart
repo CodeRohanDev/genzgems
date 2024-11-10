@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'user_profile_screen.dart'; // Import the user profile screen
+import '../Profile/User Profile/user_profile_screen.dart'; // Import the user profile screen
 
 class SearchFriendsScreen extends StatefulWidget {
   const SearchFriendsScreen({super.key});

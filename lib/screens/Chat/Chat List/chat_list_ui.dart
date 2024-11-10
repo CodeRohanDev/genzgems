@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:genzgems/screens/ai_chat_screen.dart';
+import 'package:genzgems/screens/Ai%20Chatbot/ai_chat_screen.dart';
 import 'package:lottie/lottie.dart';
 import 'chat_list_widgets.dart'; // ChatListItem component
 import 'chat_list_functions.dart'; // fetchChatList function
-import 'user_connections_screen.dart';
-import 'chat_interface_screen.dart';
+import '../../Friend/user_connections_screen.dart';
+import '../Chat Interface/chat_interface_screen.dart';
 
 class ChatListPage extends StatefulWidget {
   final String userId;

@@ -1,8 +1,11 @@
-// ignore_for_file: prefer_final_fields
+// ignore_for_file: prefer_const_literals_to_create_immutables, use_build_context_synchronously
 
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:genzgems/screens/Profile/profile_screen.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -37,7 +40,7 @@ class _UploadPostPageState extends State<UploadPostPage> {
       sourcePath: filePath,
       uiSettings: [
         AndroidUiSettings(
-          lockAspectRatio: true,
+          lockAspectRatio: false,
           aspectRatioPresets: [
             CropAspectRatioPreset.square, // Enforce square aspect ratio (1:1)
           ],
@@ -64,8 +67,8 @@ class _UploadPostPageState extends State<UploadPostPage> {
 
   // Upload image to Firebase
   Future<void> _uploadPost() async {
-    if (_croppedImageFile == null || _captionController.text.isEmpty) {
-      Fluttertoast.showToast(msg: "Please select an image and add a caption.");
+    if (_croppedImageFile == null) {
+      Fluttertoast.showToast(msg: "Please select an image.");
       return;
     }
 
@@ -74,7 +77,6 @@ class _UploadPostPageState extends State<UploadPostPage> {
     });
 
     try {
-      // Get the current user's ID from FirebaseAuth
       User? user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         Fluttertoast.showToast(msg: "No user is logged in.");
@@ -84,43 +86,70 @@ class _UploadPostPageState extends State<UploadPostPage> {
         return;
       }
 
-      String userId = user.uid; // Get the current user's ID
+      String userId = user.uid;
 
-      // Upload cropped image to Firebase Storage
+      // Read the image as a byte array
+      List<int> imageBytes = await _croppedImageFile!.readAsBytes();
+
+      // Decode the image
+      img.Image? image = img.decodeImage(Uint8List.fromList(imageBytes));
+
+      if (image == null) {
+        Fluttertoast.showToast(msg: "Failed to decode image.");
+        setState(() {
+          _isUploading = false;
+        });
+        return;
+      }
+
+      // Compress the image (quality 80 is a good starting point)
+      List<int> compressedImageBytes = img.encodeJpg(image, quality: 80);
+
+      // Create a compressed file
+      File compressedFile = File(_croppedImageFile!.path)
+        ..writeAsBytesSync(compressedImageBytes);
+
+      // Upload compressed image to Firebase Storage
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
       Reference storageRef =
           FirebaseStorage.instance.ref().child('posts/$fileName');
-      UploadTask uploadTask = storageRef.putFile(_croppedImageFile!);
+      UploadTask uploadTask = storageRef.putFile(compressedFile);
       TaskSnapshot taskSnapshot = await uploadTask;
-
       String imageUrl = await taskSnapshot.ref.getDownloadURL();
 
-      // Add post to Firestore
-      DocumentReference postRef =
-          await FirebaseFirestore.instance.collection('posts').add({
+      // Prepare post data
+      Map<String, dynamic> postData = {
         'imageUrl': imageUrl,
-        'caption': _captionController.text,
-        'tags': _tagsController.text.split(',').map((e) => e.trim()).toList(),
-        'userId': userId, // Use current user's ID
+        'userId': userId,
         'createdAt': Timestamp.now(),
-      });
+      };
 
-      // Get the tags from the post
-      List<String> tags =
-          _tagsController.text.split(',').map((e) => e.trim()).toList();
+      if (_captionController.text.isNotEmpty) {
+        postData['caption'] = _captionController.text;
+      }
 
-      // Check and add tags to the tags collection
+      List<String> tags = _tagsController.text
+          .split(',')
+          .map((tag) => tag.trim())
+          .where((tag) => tag.isNotEmpty)
+          .toList();
+      if (tags.isNotEmpty) {
+        postData['tags'] = tags;
+      }
+
+      DocumentReference postRef =
+          await FirebaseFirestore.instance.collection('posts').add(postData);
+
+      // Add tags to Firestore
       for (String tag in tags) {
         DocumentSnapshot tagSnapshot =
             await FirebaseFirestore.instance.collection('tags').doc(tag).get();
 
         if (tagSnapshot.exists) {
-          // Tag exists, add the post ID to the tag's "posts" list
           await FirebaseFirestore.instance.collection('tags').doc(tag).update({
             'posts': FieldValue.arrayUnion([postRef.id])
           });
         } else {
-          // Tag does not exist, create a new tag document
           await FirebaseFirestore.instance.collection('tags').doc(tag).set({
             'posts': [postRef.id],
             'createdAt': Timestamp.now(),
@@ -128,7 +157,6 @@ class _UploadPostPageState extends State<UploadPostPage> {
         }
       }
 
-      // Add the post to the user's posts collection
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
@@ -139,7 +167,6 @@ class _UploadPostPageState extends State<UploadPostPage> {
         'createdAt': Timestamp.now(),
       });
 
-      // Update the posts count in the user's profile
       await FirebaseFirestore.instance.collection('users').doc(userId).update({
         'postsCount': FieldValue.increment(1),
       });
@@ -159,11 +186,15 @@ class _UploadPostPageState extends State<UploadPostPage> {
     }
   }
 
-  // Build the widget
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Upload Post")),
+      backgroundColor: Color.fromARGB(7, 165, 210, 247),
+      appBar: AppBar(
+          title: Text(
+        "Upload Post",
+        style: TextStyle(fontWeight: FontWeight.w500, letterSpacing: 1),
+      )),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -175,40 +206,106 @@ class _UploadPostPageState extends State<UploadPostPage> {
                   ? GestureDetector(
                       onTap: _pickImage,
                       child: Container(
-                        color: Colors.grey[200],
-                        height: 200,
+                        height: 300,
+                        decoration: BoxDecoration(
+                          color: Colors.white, // Set color here
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade400),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ], // Add shadow for better look
+                        ),
                         child: Center(
-                          child: Icon(Icons.camera_alt, size: 50),
+                          child: Icon(Icons.camera_alt,
+                              size: 60, color: Colors.blue),
                         ),
                       ),
                     )
-                  : Image.file(_croppedImageFile!),
+                  : ClipRRect(
+                      borderRadius:
+                          BorderRadius.circular(16), // Rounded corners
+                      child: Image.file(
+                        _croppedImageFile!,
+                        height: 300,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
               SizedBox(height: 16),
               // Caption field
+              Text("Caption",
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1)),
+              SizedBox(
+                height: 16,
+              ),
               TextField(
                 controller: _captionController,
                 decoration: InputDecoration(
-                  hintText: "Add a caption...",
-                  border: OutlineInputBorder(),
+                  hintText: "Write Something about the post...",
+                  hintStyle: TextStyle(
+                      fontStyle: FontStyle.italic, color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
                 ),
                 maxLines: 3,
+                style: TextStyle(fontSize: 16),
               ),
               SizedBox(height: 16),
+              Text("Tags",
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1)),
+              SizedBox(
+                height: 16,
+              ),
               // Tags field
               TextField(
                 controller: _tagsController,
                 decoration: InputDecoration(
-                  hintText: "Add tags (comma separated)...",
-                  border: OutlineInputBorder(),
+                  hintText: "Tags (seperated with comma)",
+                  hintStyle: TextStyle(
+                      fontStyle: FontStyle.italic, color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
                 ),
+                style: TextStyle(fontSize: 16),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 26),
               // Upload button
               _isUploading
                   ? Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _uploadPost,
-                      child: Text("Upload Post"),
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _uploadPost,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 16, horizontal: 40),
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child:
+                            Text("Upload Post", style: TextStyle(fontSize: 16)),
+                      ),
                     ),
             ],
           ),

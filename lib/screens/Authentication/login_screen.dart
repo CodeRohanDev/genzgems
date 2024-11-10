@@ -1,9 +1,9 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, sized_box_for_whitespace, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:genzgems/screens/authentication_service.dart';
-import 'package:genzgems/screens/forgot_password_screen.dart';
-import 'package:genzgems/screens/home_screen.dart';
+import 'package:genzgems/screens/Authentication/authentication_service.dart';
+import 'package:genzgems/screens/Authentication/forgot_password_screen.dart';
+import 'package:genzgems/screens/Home/home_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
