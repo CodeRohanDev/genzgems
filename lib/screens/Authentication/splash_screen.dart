@@ -1,7 +1,6 @@
-// ignore_for_file: prefer_const_literals_to_create_immutables, prefer_const_constructors
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -30,17 +29,28 @@ class _SplashScreenState extends State<SplashScreen>
     _checkLoginStatus();
   }
 
-  // Check if the user is logged in
+  // Check if the user is logged in and exists in Firestore
   void _checkLoginStatus() async {
     // Simulate a delay to show the splash screen for a moment
-    await Future.delayed(
-        Duration(seconds: 3)); // Changed to 3 seconds for visibility
+    await Future.delayed(Duration(seconds: 3));
 
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      // User is signed in, navigate to HomeScreen
-      Navigator.pushReplacementNamed(context, '/home');
+      // User is signed in, check if the account exists in Firestore
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (userDoc.exists) {
+        // User exists in Firestore, navigate to HomeScreen
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        // User does not exist in Firestore, sign out and navigate to LoginScreen
+        await FirebaseAuth.instance.signOut();
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     } else {
       // User is not signed in, navigate to LoginScreen
       Navigator.pushReplacementNamed(context, '/login');

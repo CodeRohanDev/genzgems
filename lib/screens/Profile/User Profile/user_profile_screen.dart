@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, sort_child_properties_last
+// ignore_for_file: prefer_const_constructors, sort_child_properties_last, prefer_const_literals_to_create_immutables, prefer_final_fields, use_key_in_widget_constructors, prefer_const_constructors_in_immutables
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -66,9 +66,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           String coverImageUrl = userData['coverImageUrl'] ?? '';
           String category = userData['category'] ?? '';
           String followersCount =
-              (userData['followers'] as List).length.toString();
+              (userData['followers'] as List<dynamic>? ?? []).length.toString();
           String followingCount =
-              (userData['following'] as List).length.toString();
+              (userData['following'] as List<dynamic>? ?? []).length.toString();
 
           return ListView(
             padding: const EdgeInsets.all(0),
@@ -455,11 +455,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ),
           itemCount: posts.length,
           itemBuilder: (context, index) {
-            String postId = posts[index]['id'] ??
-                ''; // Provide a default empty string if 'id' is null
-
+            String postId = posts[index]['id'] ?? '';
             String imageUrl = posts[index]['imageUrl'] ?? '';
-
             return GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -517,7 +514,7 @@ class ImageViewerScreen extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.close, color: Colors.white),
             onPressed: () {
-              Navigator.pop(context); // Close the image viewer
+              Navigator.pop(context);
             },
           ),
         ],
@@ -529,10 +526,10 @@ class ImageViewerScreen extends StatelessWidget {
         child: Center(
           child: InteractiveViewer(
             minScale: 0.5, // Minimum zoom out scale
-            maxScale: 4.0, // Maximum zoom in scale
+            maxScale: 4.0,
             child: Image.network(
               imageUrl,
-              fit: BoxFit.contain, // Ensure the image fits within the screen
+              fit: BoxFit.contain,
             ),
           ),
         ),

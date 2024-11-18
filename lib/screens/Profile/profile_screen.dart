@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_literals_to_create_immutables, use_super_parameters, use_build_context_synchronously
+// ignore_for_file: prefer_const_literals_to_create_immutables
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -15,7 +15,7 @@ class ProfileScreen extends StatelessWidget {
     final String userId = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(7, 165, 210, 247),
+      backgroundColor: Color.fromARGB(255, 255, 255, 255),
       endDrawer: Drawer(
         shape: Border.symmetric(horizontal: BorderSide.none),
         child: ListView(padding: EdgeInsets.zero, children: <Widget>[
@@ -51,13 +51,17 @@ class ProfileScreen extends StatelessWidget {
             .doc(userId)
             .snapshots(),
         builder: (context, snapshot) {
+          // Show loading indicator when waiting for data
           if (snapshot.connectionState == ConnectionState.waiting) {
             return buildLoadingProfileHeader();
           }
+
+          // Handle no data or if the document does not exist
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return Center(child: Text('Profile data not found.'));
           }
 
+          // Extract user data from snapshot
           var userData = snapshot.data!.data() as Map<String, dynamic>;
           String? profileImageUrl = userData['profileImageUrl'];
           String fullName = userData['fullName'] ?? 'Full Name';
@@ -72,6 +76,7 @@ class ProfileScreen extends StatelessWidget {
           int followingCount = followingList.length;
           int postsCount = userData['postsCount'] ?? 0;
 
+          // Build and display the profile page
           return SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(0),
@@ -79,14 +84,14 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   buildProfileHeader(profileImageUrl, fullName, username, bio,
                       category, coverImageUrl, context),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
                         buildProfileStats(followersCount, followingCount,
                             postsCount, userId, context),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
@@ -117,6 +122,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  // Widget for circular loading while profile data is being loaded
   Widget buildLoadingProfileHeader() {
     return Center(
       child: Column(

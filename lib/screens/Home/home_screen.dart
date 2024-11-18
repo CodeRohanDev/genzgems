@@ -1,5 +1,5 @@
 // home_screen.dart
-// ignore_for_file: prefer_const_constructors, prefer_final_fields
+// ignore_for_file: prefer_const_constructors, prefer_final_fields, use_build_context_synchronously
 
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
@@ -8,8 +8,6 @@ import 'package:genzgems/screens/Chat/Chat%20List/chat_list_ui.dart';
 import 'package:genzgems/screens/Face%20Filters/face_filters.dart';
 import 'package:genzgems/screens/Profile/profile_screen.dart';
 import 'package:genzgems/screens/Posts/upload_post_page.dart';
-import 'package:provider/provider.dart';
-import '../../theme_notifier.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -56,8 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeNotifier = Provider.of<ThemeNotifier>(context);
-
     return Scaffold(
       // appBar: AppBar(
       //   title: Text('Home Screen'),
@@ -78,9 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // ),
       body: _pages.isNotEmpty
           ? _pages[_selectedIndex]
-          : Center(
-              child:
-                  CircularProgressIndicator()), // Ensure pages are initialized
+          : Center(child: CircularProgressIndicator()),
       bottomNavigationBar: FlashyTabBar(
         selectedIndex: _selectedIndex,
         showElevation: true,

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:genzgems/screens/Profile/Update%20Profile/update_profile_screen.dart';
 import 'package:genzgems/screens/Profile/profile_screen.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -11,9 +12,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 import 'package:genzgems/screens/Followers%20and%20Following/followers_following_screen.dart';
 import 'package:genzgems/screens/Posts/post_details_screen.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-
-import 'package:shimmer/shimmer.dart';
+import 'dart:typed_data';
 
 Widget buildProfileHeader(
   String? profileImageUrl,
@@ -24,143 +25,171 @@ Widget buildProfileHeader(
   String? coverImageUrl,
   BuildContext context,
 ) {
-  final ImagePicker _picker = ImagePicker();
+  final ImagePicker picker = ImagePicker();
 
-  return Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-    GestureDetector(
-      onTap: () => showCoverPhotoDialog(coverImageUrl, context, _picker),
-      child: Stack(
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      // Stack for cover photo and overlapping profile photo
+      Stack(
+        clipBehavior: Clip.none,
         children: [
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: coverImageUrl != null
-                    ? NetworkImage(coverImageUrl)
-                    : AssetImage('assets/default_cover.jpg') as ImageProvider,
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: coverImageUrl == null
-                ? Icon(Icons.photo, color: Colors.white, size: 50)
-                : null,
+          // Cover photo container with loading effect
+          GestureDetector(
+            onTap: () => showCoverPhotoDialog(coverImageUrl, context, picker),
+            child: coverImageUrl != null && coverImageUrl.isNotEmpty
+                ? FadeInImage.assetNetwork(
+                    placeholder: 'assets/default_cover.jpg',
+                    image: coverImageUrl,
+                    fit: BoxFit.cover,
+                    height: 200,
+                    width: double.infinity,
+                    imageErrorBuilder: (context, error, stackTrace) =>
+                        Image.asset(
+                      'assets/default_cover.jpg',
+                      fit: BoxFit.cover,
+                      height: 200,
+                      width: double.infinity,
+                    ),
+                  )
+                : Image.asset(
+                    'assets/default_cover.jpg',
+                    fit: BoxFit.cover,
+                    height: 200,
+                    width: double.infinity,
+                  ),
           ),
+          // Positioned profile photo with border
           Positioned(
-            right: 10,
-            top: 20,
-            child: IconButton(
-              icon: Icon(
-                Icons.menu,
-                color: Colors.white,
-                size: 35,
+            bottom: -50, // Half the radius of the profile photo to overlap
+            left:
+                MediaQuery.of(context).size.width / 2 - 55, // Adjust for border
+            child: GestureDetector(
+              onTap: () => showProfileDialog(profileImageUrl, context, picker),
+              child: Container(
+                width: 110, // Account for the border
+                height: 110,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color:
+                        const Color.fromARGB(110, 7, 144, 255), // Border color
+                    width: 3, // Border width
+                  ),
+                  color: Colors.white, // Background color behind avatar
+                ),
+                child: Container(
+                  width: 110, // Account for the border
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white, // Border color
+                      width: 2.0, // Border width
+                    ),
+                    color: Colors.white, // Background color behind avatar
+                  ),
+                  child: CircleAvatar(
+                    radius: 48, // Slightly smaller than the container
+                    backgroundImage: profileImageUrl?.isEmpty ?? true
+                        ? AssetImage('assets/person3.png') as ImageProvider
+                        : NetworkImage(profileImageUrl!),
+                    onBackgroundImageError: (_, __) => Icon(Icons.error),
+                  ),
+                ),
               ),
-              onPressed: () {
-                _showMenu(context);
-              },
             ),
           ),
         ],
       ),
-    ),
-    SizedBox(height: 10),
-
-    // Profile image with default asset if no URL
-    GestureDetector(
-      onTap: () => showProfileDialog(profileImageUrl, context, _picker),
-      child: CircleAvatar(
-        radius: 50,
-        backgroundImage: profileImageUrl?.isEmpty ?? true
-            ? AssetImage('assets/person3.png') as ImageProvider
-            : NetworkImage(profileImageUrl!),
+      SizedBox(height: 50), // Space for the overlap
+      // Name and username
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          fullName.isEmpty
+              ? Text(
+                  'Full Name Not Available',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                )
+              : Text(
+                  fullName,
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+          // SizedBox(height: 1),
+          username.isEmpty
+              ? Text(
+                  'Username Not Available',
+                  style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+                )
+              : Text(
+                  '@$username',
+                  style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+                ),
+        ],
       ),
-    ),
-
-    SizedBox(width: 20),
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        fullName.isEmpty
-            ? Text(
-                'Full Name Not Available',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              )
-            : Text(
-                fullName,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-        SizedBox(height: 1),
-        username.isEmpty
-            ? Text(
-                'Username Not Available',
-                style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-              )
-            : Text(
-                '@$username',
-                style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-              ),
-      ],
-    ),
-    SizedBox(height: 10),
-
-    if (category != null && category.isNotEmpty)
-      Container(
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5),
-          color: Colors.grey[300],
+      SizedBox(height: 5),
+      // Category
+      if (category != null && category.isNotEmpty)
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            color: Colors.grey[300],
+          ),
+          child: Text(category,
+              style: TextStyle(fontSize: 16, color: Colors.black)),
         ),
-        child:
-            Text(category, style: TextStyle(fontSize: 16, color: Colors.black)),
-      ),
-    SizedBox(height: 10),
-
-    bio.isEmpty
-        ? Text(
-            'Bio Not Available',
-            style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-            maxLines: null,
-            softWrap: true,
-          )
-        : Text(
-            bio,
-            style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-            maxLines: null,
-            softWrap: true,
-          ),
-    Padding(
-      padding: const EdgeInsets.only(left: 30, right: 30),
-      child: SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => UpdateProfileScreen()),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              side: BorderSide(width: 0.5),
-              borderRadius: BorderRadius.circular(10),
+      // SizedBox(height: 10),
+      // Bio
+      bio.isEmpty
+          ? Text(
+              'Bio Not Available',
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              maxLines: null,
+              softWrap: true,
+            )
+          : Text(
+              bio,
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              maxLines: null,
+              softWrap: true,
             ),
-            padding: EdgeInsets.symmetric(horizontal: 20),
-          ),
-          child: Text(
-            "Edit Profile",
-            style: TextStyle(
-              letterSpacing: 1,
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+      SizedBox(height: 10),
+      // Edit Profile button
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 80),
+        child: SizedBox(
+          width: double.infinity,
+          height: 40,
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UpdateProfileScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color.fromARGB(157, 89, 0, 255),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 20),
+            ),
+            child: Text(
+              "Edit Profile",
+              style: TextStyle(
+                letterSpacing: 1,
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
       ),
-    ),
-  ]);
+    ],
+  );
 }
 
 void _showMenu(BuildContext context) {
@@ -248,10 +277,21 @@ Future<void> showCoverPhotoDialog(
 Future<void> uploadCoverImageToFirebase(
     File image, BuildContext context) async {
   try {
-    String fileName = basename(image.path);
+    // Step 1: Compress the image
+    File? compressedImage = await compressCoverImage(image);
+
+    // Check if compression was successful
+    if (compressedImage == null) {
+      throw Exception('Image compression failed');
+    }
+
+    // Step 2: Upload compressed image to Firebase
+    String fileName = basename(compressedImage.path);
     Reference storageRef =
         FirebaseStorage.instance.ref().child('cover_photos/$fileName');
-    UploadTask uploadTask = storageRef.putFile(image);
+    UploadTask uploadTask = storageRef.putFile(compressedImage);
+
+    // Show uploading dialog
     showDialog(
         context: context,
         barrierDismissible: false,
@@ -265,20 +305,53 @@ Future<void> uploadCoverImageToFirebase(
                     Text("Uploading cover photo...")
                   ])));
         });
+
+    // Wait for upload to complete
     TaskSnapshot snapshot = await uploadTask.whenComplete(() {});
     String coverImageUrl = await snapshot.ref.getDownloadURL();
+
+    // Step 3: Update Firestore with the new cover photo URL
     final String userId = FirebaseAuth.instance.currentUser!.uid;
     await FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
         .update({'coverImageUrl': coverImageUrl});
+
+    // Close dialog and show success message
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Cover photo updated successfully!')));
   } catch (e) {
+    // Handle errors
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text('Failed to update cover photo')));
+  }
+}
+
+// Function to compress the image
+Future<File?> compressCoverImage(File image) async {
+  try {
+    final dir = await getTemporaryDirectory();
+    final targetPath = '${dir.path}/${basename(image.path)}_compressed.jpg';
+
+    // Compress the image
+    XFile? compressedXFile = await FlutterImageCompress.compressAndGetFile(
+      image.absolute.path, // Input file path
+      targetPath, // Output file path
+      quality: 40, // Compression quality (0-100, lower means more compression)
+      minWidth: 1080, // Set a maximum width for resizing
+      minHeight: 1920, // Set a maximum height for resizing
+    );
+
+    // Convert XFile to File
+    if (compressedXFile != null) {
+      return File(compressedXFile.path);
+    }
+    return null;
+  } catch (e) {
+    debugPrint("Error during image compression: $e");
+    return null;
   }
 }
 
@@ -411,10 +484,26 @@ void showProfileImage(String imageUrl, BuildContext context) {
 
 Future<void> uploadImageToFirebase(File image, BuildContext context) async {
   try {
+    // Compress the image
+    Uint8List? compressedImageBytes =
+        await FlutterImageCompress.compressWithFile(
+      image.path,
+      quality: 40, // Set quality (0-100)
+    );
+
+    if (compressedImageBytes == null) {
+      throw Exception("Failed to compress image.");
+    }
+
+    // Convert compressed Uint8List back to a File
     String fileName = basename(image.path);
+    File compressedImage = File('${image.parent.path}/compressed_$fileName')
+      ..writeAsBytesSync(compressedImageBytes);
+
+    // Upload the compressed image to Firebase
     Reference storageRef =
         FirebaseStorage.instance.ref().child('profile_pics/$fileName');
-    UploadTask uploadTask = storageRef.putFile(image);
+    UploadTask uploadTask = storageRef.putFile(compressedImage);
 
     showDialog(
         context: context,
@@ -480,28 +569,40 @@ Future<void> removeProfileImage(
 Widget buildProfileStats(int followers, int following, int postsCount,
     String userId, BuildContext context) {
   return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 0.0),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Expanded(child: buildStatItem('Posts', postsCount)),
-        VerticalDivider(color: Colors.grey.shade300, thickness: 1.5, width: 20),
+    padding: const EdgeInsets.symmetric(
+        vertical: 0), // Added padding for better spacing
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
         Expanded(
-            child: GestureDetector(
-                onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            FollowersFollowingScreen(userId: userId))),
-                child: buildStatItem('Followers', followers))),
-        VerticalDivider(color: Colors.grey.shade300, thickness: 1.5, width: 20),
+          child: buildStatItem('Posts', postsCount),
+        ),
         Expanded(
-            child: GestureDetector(
-                onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            FollowersFollowingScreen(userId: userId))),
-                child: buildStatItem('Following', following)))
-      ]));
+          child: GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FollowersFollowingScreen(userId: userId),
+              ),
+            ),
+            child: buildStatItem('Followers', followers),
+          ),
+        ),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FollowersFollowingScreen(userId: userId),
+              ),
+            ),
+            child: buildStatItem('Following', following),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 Widget buildStatItem(String label, int count) {
@@ -534,12 +635,13 @@ Widget buildUserPosts(String userId) {
         }
 
         return GridView.builder(
+            padding: EdgeInsets.only(top: 15),
             physics: NeverScrollableScrollPhysics(),
             shrinkWrap: true,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
-              mainAxisSpacing: 4.0,
-              crossAxisSpacing: 4.0,
+              mainAxisSpacing: 5.0,
+              crossAxisSpacing: 5.0,
             ),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
@@ -558,13 +660,12 @@ Widget buildUserPosts(String userId) {
                       decoration: BoxDecoration(
                           border: Border.all(
                               color: Colors.grey.withOpacity(0.4), width: 1),
-                          borderRadius:
-                              BorderRadius.circular(12), // Rounded corners
+                          borderRadius: BorderRadius.circular(0),
                           boxShadow: [
-                            BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 4,
-                                offset: Offset(2, 2))
+                            // BoxShadow(
+                            //     color: Colors.black12,
+                            //     blurRadius: 4,
+                            //     offset: Offset(2, 2))
                           ]),
                       clipBehavior: Clip.hardEdge,
                       child: postImageUrl.isNotEmpty
@@ -588,13 +689,11 @@ Widget buildHighlightSection(String userId, BuildContext context) {
       if (snapshot.connectionState == ConnectionState.waiting) {
         return Center(child: CircularProgressIndicator());
       }
-
-      // If no highlights are found, show the add button
       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
         return Container(
           decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(5),
               border: Border.all(width: 0.1)),
           width: double.infinity,
           child: Column(
@@ -603,12 +702,12 @@ Widget buildHighlightSection(String userId, BuildContext context) {
               Row(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(10.0),
                     child: Column(
                       children: [
                         GestureDetector(
                           child: CircleAvatar(
-                            radius: 35,
+                            radius: 30,
                             backgroundColor:
                                 const Color.fromARGB(157, 89, 0, 255),
                             child: IconButton(
@@ -617,13 +716,13 @@ Widget buildHighlightSection(String userId, BuildContext context) {
                               },
                               icon: Icon(
                                 Icons.add,
-                                size: 30,
+                                size: 35,
                                 color: Colors.white,
                               ),
                             ),
                           ),
                         ),
-                        Text("Add Highlight"),
+                        Text("Add"),
                       ],
                     ),
                   ),
@@ -643,7 +742,7 @@ Widget buildHighlightSection(String userId, BuildContext context) {
             border: Border.all(width: 0.1)),
         width: double.infinity,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(10),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Column(
@@ -653,12 +752,13 @@ Widget buildHighlightSection(String userId, BuildContext context) {
                   children: [
                     // Add Highlight button on the left side of the row
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      padding: const EdgeInsets.only(
+                          right: 4), // Slight padding for spacing
                       child: Column(
                         children: [
                           GestureDetector(
                             child: CircleAvatar(
-                              radius: 35,
+                              radius: 30,
                               backgroundColor: Color.fromARGB(157, 89, 0, 255),
                               child: IconButton(
                                 onPressed: () async {
@@ -666,13 +766,13 @@ Widget buildHighlightSection(String userId, BuildContext context) {
                                 },
                                 icon: Icon(
                                   Icons.add,
-                                  size: 30,
+                                  size: 35,
                                   color: Colors.white,
                                 ),
                               ),
                             ),
                           ),
-                          Text("Add Highlight"),
+                          Text("Add"),
                         ],
                       ),
                     ),
@@ -684,34 +784,34 @@ Widget buildHighlightSection(String userId, BuildContext context) {
                       String title = highlightData['title'] ?? 'No Title';
                       String highlightId = highlight.id;
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HighlightStoryScreen(
-                                  imageUrl: imageUrl ?? '',
-                                  title: title,
-                                ),
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HighlightStoryScreen(
+                                imageUrl: imageUrl ?? '',
+                                title: title,
                               ),
+                            ),
+                          );
+                        },
+                        onLongPress: () async {
+                          bool? shouldDelete = await _showDeleteDialog(context);
+                          if (shouldDelete == true) {
+                            await _deleteHighlight(highlightId);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Highlight deleted')),
                             );
-                          },
-                          onLongPress: () async {
-                            bool? shouldDelete =
-                                await _showDeleteDialog(context);
-                            if (shouldDelete == true) {
-                              await _deleteHighlight(highlightId);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Highlight deleted')),
-                              );
-                            }
-                          },
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4.0), // Reduced padding
                           child: Column(
                             children: [
                               CircleAvatar(
-                                radius: 35,
+                                radius: 30,
                                 backgroundImage: imageUrl != null
                                     ? NetworkImage(imageUrl)
                                     : AssetImage('assets/logo.png')
@@ -720,11 +820,12 @@ Widget buildHighlightSection(String userId, BuildContext context) {
                               SizedBox(height: 5),
                               // Centered title below the image
                               Container(
-                                width: 80,
+                                width: 30, // Adjusted for a compact design
                                 alignment: Alignment.center,
                                 child: Text(
                                   title,
-                                  style: TextStyle(fontSize: 14),
+                                  style: TextStyle(
+                                      fontSize: 12), // Slightly smaller text
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
                                   softWrap: false,
@@ -735,7 +836,7 @@ Widget buildHighlightSection(String userId, BuildContext context) {
                           ),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ],
@@ -829,11 +930,29 @@ Future<void> _addHighlight(BuildContext context, String userId) async {
     return; // If no image was selected
   }
 
-  // Crop the image
+  // Crop the image (optional, if you have a crop function)
   File? croppedFile = await _cropImage(File(pickedFile.path));
   if (croppedFile == null) {
     return; // If image cropping was canceled
   }
+
+  // Compress the image
+  Uint8List? compressedImageBytes = await FlutterImageCompress.compressWithFile(
+    croppedFile.path,
+    quality: 40, // Adjust the quality as needed
+  );
+
+  if (compressedImageBytes == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to compress image.')),
+    );
+    return;
+  }
+
+  // Save the compressed image to a temporary file
+  File compressedImage = File(
+      '${croppedFile.parent.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.jpg');
+  compressedImage.writeAsBytesSync(compressedImageBytes);
 
   String? title = await _showTitleDialog(context);
   if (title == null || title.isEmpty) {
@@ -874,10 +993,10 @@ Future<void> _addHighlight(BuildContext context, String userId) async {
   );
 
   try {
-    // Upload image to Firebase Storage
+    // Upload compressed image to Firebase Storage
     TaskSnapshot uploadTask = await FirebaseStorage.instance
         .ref('highlights/${DateTime.now().millisecondsSinceEpoch}.jpg')
-        .putFile(croppedFile);
+        .putFile(compressedImage);
 
     String imageUrl = await uploadTask.ref.getDownloadURL();
 
